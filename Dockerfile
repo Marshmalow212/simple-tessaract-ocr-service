@@ -1,10 +1,3 @@
-# filepath: Dockerfile
-# syntax=docker/dockerfile:1.7
-# Multi-stage, non-root, slim base. Targets Python 3.14.
-#
-# Tesseract OCR + English language pack are installed in the runtime stage so
-# the /api/v1/ocr/tesseract endpoint works out of the box.
-
 # ---- builder: install wheels into a relocatable prefix ---------------------
 FROM python:3.14-slim AS builder
 
@@ -44,8 +37,7 @@ RUN apt-get update \
         tesseract-ocr \
         tesseract-ocr-eng \
         curl \
- && rm -rf /var/lib/apt/lists/* \
- && useradd --create-home --uid 1000 --shell /bin/bash app
+ && rm -rf /var/lib/apt/lists/*
 
 # Bring wheels from the builder stage
 COPY --from=builder /install /usr/local
@@ -54,8 +46,7 @@ WORKDIR ${APP_HOME}
 COPY --chown=app:app . ${APP_HOME}
 
 # Persistent dirs
-RUN mkdir -p ${APP_HOME}/logs ${APP_HOME}/uploads && chown -R app:app ${APP_HOME}
-USER app
+RUN mkdir -p ${APP_HOME}/logs ${APP_HOME}/uploads
 
 EXPOSE 8000
 

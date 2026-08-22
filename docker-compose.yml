@@ -1,16 +1,3 @@
-# filepath: docker-compose.yml
-# Standalone dev environment for the FastAPI service + Postgres.
-#
-# Usage:
-#   docker compose up --build         # start both services
-#   docker compose down -v            # stop + wipe the DB volume
-#   docker compose logs -f api        # tail api logs
-#
-# Once up:
-#   - API:        http://localhost:8000
-#   - Swagger UI: http://localhost:8000/docs
-#   - Postgres:   localhost:5432 (user/pw/db = ocr / ocr / ocr)
-
 name: simple-ocr-service
 
 services:
@@ -19,13 +6,13 @@ services:
     container_name: ocr_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-ocr}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ocr}
-      POSTGRES_DB: ${POSTGRES_DB:-ocr}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_EXPOSED_PORT:-5432}:5432"
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pg_data_ocr:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -67,7 +54,7 @@ services:
       - ocrnet
 
 volumes:
-  pg_data:
+  pg_data_ocr:
   api_logs:
   api_uploads:
 
