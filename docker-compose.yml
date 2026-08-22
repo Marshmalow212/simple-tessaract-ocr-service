@@ -1,0 +1,76 @@
+# filepath: docker-compose.yml
+# Standalone dev environment for the FastAPI service + Postgres.
+#
+# Usage:
+#   docker compose up --build         # start both services
+#   docker compose down -v            # stop + wipe the DB volume
+#   docker compose logs -f api        # tail api logs
+#
+# Once up:
+#   - API:        http://localhost:8000
+#   - Swagger UI: http://localhost:8000/docs
+#   - Postgres:   localhost:5432 (user/pw/db = ocr / ocr / ocr)
+
+name: simple-ocr-service
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ocr_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ocr}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ocr}
+      POSTGRES_DB: ${POSTGRES_DB:-ocr}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - ocrnet
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ocr_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ENV: ${APP_ENV:-docker}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      API_KEYS: ${API_KEYS:-docker-key}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ocr}:${POSTGRES_PASSWORD:-ocr}@db:5432/${POSTGRES_DB:-ocr}
+      DATABASE_URL_SYNC: postgresql+psycopg2://${POSTGRES_USER:-ocr}:${POSTGRES_PASSWORD:-ocr}@db:5432/${POSTGRES_DB:-ocr}
+      DB_POOL_SIZE: "5"
+      DB_MAX_OVERFLOW: "10"
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - api_logs:/app/logs
+      - api_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/v1/health/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - ocrnet
+
+volumes:
+  pg_data:
+  api_logs:
+  api_uploads:
+
+networks:
+  ocrnet:
+    driver: bridge
