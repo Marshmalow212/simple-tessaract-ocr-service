@@ -44,6 +44,7 @@ services:
     volumes:
       - api_logs:/app/logs
       - api_uploads:/app/uploads
+      - ./:/app/
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/v1/health/ping"]
       interval: 30s
