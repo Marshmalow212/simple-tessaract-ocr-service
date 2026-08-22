@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 
 router = APIRouter(prefix="/ocr", tags=["ocr"])
 
-_ALLOWED_JPEG_TYPES = {"image/jpeg", "image/jpg"}
+_ALLOWED_JPEG_TYPES = {"image/jpeg", "image/jpg", "image/png"}
 
 
 @router.post(
@@ -45,7 +45,7 @@ _ALLOWED_JPEG_TYPES = {"image/jpeg", "image/jpg"}
 async def extract_text(
     request: Request,
     response: Response,
-    file: UploadFile = File(..., description="Image to OCR (PNG/JPEG/WEBP)"),
+    file: UploadFile = File(..., description="Image to OCR (PNG/JPEG)"),
     language: OcrLanguage = Form(default="eng", description="OCR language code"),
     api_key: str = Depends(verify_api_key),
     service: OcrService = Depends(get_ocr_service),

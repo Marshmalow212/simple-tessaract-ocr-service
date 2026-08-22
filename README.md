@@ -69,8 +69,7 @@ app/
 | ------ | ------------------------------------- | ------ | -------------------------------------------------------- |
 | GET    | `/`                                   | none   | Service banner                                           |
 | GET    | `/api/v1/health`                      | none   | Health probe (app + DB). 503 when degraded.              |
-| GET    | `/api/v1/health/ping`                 | none   | Lightweight liveness probe                               |
-| POST   | `/api/v1/ocr/extract`                 | API-key| OCR image upload (multipart/form, legacy stub)           |
+| GET    | `/api/v1/health/ping`                 | none   | Lightweight liveness probe                               |          |
 | POST   | `/api/v1/ocr/tesseract`               | API-key| Tesseract OCR for JPG/JPEG (multipart/form, in-memory, cached) |
 | GET    | `/api/v1/ocr/tesseract/cache/stats`   | none   | OCR cache counters (hits, misses, size, …)               |
 | POST   | `/api/v1/ocr/tesseract/cache/purge`   | API-key| Drop all cached OCR entries                              |
@@ -89,7 +88,7 @@ Request:
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/ocr/tesseract \
-  -H "X-API-Key: docker-key" \
+  -H "X-API-Key: api-test-55441133" \
   -F "file=@/path/to/image.jpg"
 ```
 
@@ -103,26 +102,6 @@ Response (success):
   "processing_time_ms": 1234
 }
 ```
-
-> **Note:** cache hit/miss is **not** returned on the API response. Every
-> hit and miss is instead recorded on a dedicated, always-on audit logger
-> (`app.audit.cache`) that writes to `logs/ocr_cache.log` **and** stdout,
-> independent of the operator's chosen `LOG_LEVEL`. Example lines:
->
-> ```
-> 2026-08-22T09:38:14 | WARNING | app.audit.cache | ocr cache MISS file=a.jpg key=f7d7… size=631 lang=eng ms=0 text_chars=11 conf=0.85
-> 2026-08-22T09:38:14 | WARNING | app.audit.cache | ocr cache HIT  file=a.jpg key=f7d7… size=631 lang=eng ms=0
-> ```
->
-> This guarantees an audit trail even when `LOG_LEVEL=CRITICAL` is set in
-> `.env`. Cache knobs:
->
-> ```
-> OCR_CACHE_ENABLED=true
-> OCR_CACHE_CAPACITY=128
-> OCR_CACHE_TTL_SECONDS=0   # 0 = no expiry
-> OCR_CACHE_AUDIT_LOG=logs/ocr_cache.log
-> ```
 
 Errors:
 

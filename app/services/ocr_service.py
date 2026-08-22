@@ -164,9 +164,10 @@ class TesseractOcrService:
             total_ms, elapsed_read_ms, total_ms - elapsed_read_ms,
             outcome.confidence, len(outcome.text),
         )
+        final_text = process_outcome_text(outcome)
         result = TesseractOcrResponse(
             success=True,
-            text=outcome.text,
+            text=final_text,
             confidence=outcome.confidence,
             processing_time_ms=total_ms,
         )
@@ -202,3 +203,16 @@ def get_tesseract_ocr_service() -> TesseractOcrService:
     )
     cache = get_default_cache() if settings.ocr_cache_enabled else None
     return TesseractOcrService(engine=engine, cache=cache)
+
+def process_outcome_text(outcome: TesseractOcrOutcome) -> str:
+    """Process the OCR outcome text to remove unwanted characters and whitespace."""
+    # Remove non-printable characters
+    cleaned_text = ''.join(c for c in outcome.text if c.isprintable())
+    # Normalize whitespace (replace multiple spaces with a single space)
+    cleaned_text = ' '.join(cleaned_text.split())
+
+    # Normalize other characters (e.g., replace fancy quotes with standard quotes, replace \n with new line)
+    cleaned_text = cleaned_text.replace('“', '"').replace('”', '"').replace("‘", "'").replace("’", "'")
+
+
+    return cleaned_text
