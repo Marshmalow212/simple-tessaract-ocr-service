@@ -88,7 +88,7 @@ Request:
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/ocr/tesseract \
-  -H "X-API-Key: api-test-55441133" \
+  -H "X-API-Key: Your-API-key-here" \
   -F "file=@/path/to/image.jpg"
 ```
 
