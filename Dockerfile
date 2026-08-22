@@ -1,23 +1,5 @@
 # ---- builder: install wheels into a relocatable prefix ---------------------
-FROM python:3.14-slim AS builder
-
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
-
-WORKDIR /build
-
-RUN apt-get update \
- && apt-get install -y --no-install-recommends build-essential gcc libpq-dev \
- && rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt ./
-RUN pip install --prefix=/install --no-cache-dir -r requirements.txt
-
-
-# ---- runtime: minimal image with the app code -----------------------------
-FROM python:3.14-slim AS runtime
+FROM python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -26,24 +8,18 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     APP_HOME=/app \
     PORT=8000
 
-# Runtime-only system packages.
-# - libpq5: required by asyncpg / psycopg2
-# - tesseract-ocr: the OCR engine invoked by pytesseract
-# - tesseract-ocr-eng: English language data (add more as needed)
-# - curl: used by the container healthcheck
+WORKDIR ${APP_HOME}
+
 RUN apt-get update \
- && apt-get install -y --no-install-recommends \
+        && apt-get install -y --no-install-recommends build-essential gcc libpq-dev \
         libpq5 \
         tesseract-ocr \
         tesseract-ocr-eng \
         curl \
- && rm -rf /var/lib/apt/lists/*
+        && rm -rf /var/lib/apt/lists/*
 
-# Bring wheels from the builder stage
-COPY --from=builder /install /usr/local
-
-WORKDIR ${APP_HOME}
-COPY --chown=app:app . ${APP_HOME}
+COPY . ./
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Persistent dirs
 RUN mkdir -p ${APP_HOME}/logs ${APP_HOME}/uploads
