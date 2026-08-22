@@ -36,6 +36,7 @@ def init_engine() -> AsyncEngine:
         pool_timeout=settings.db_pool_timeout_seconds,
         pool_pre_ping=True,
         future=True,
+        connect_args={"server_settings": {"statement_cache_size": 0}},
     )
     _session_factory = async_sessionmaker(
         _engine, expire_on_commit=False, class_=AsyncSession
